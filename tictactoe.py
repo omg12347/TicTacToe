@@ -1,90 +1,94 @@
-import os    
-import time    
-    
-board = [' ',' ',' ',' ',' ',' ',' ',' ',' ',' ']    
-player = 1    
-   
-########win Flags##########    
-Win = 1    
-Draw = -1    
-Running = 0    
-Stop = 1    
-###########################    
-Game = Running    
-Mark = 'X'    
-   
-#This Function Draws Game Board    
-def DrawBoard():    
-    print(" %c | %c | %c " % (board[1],board[2],board[3]))    
-    print("___|___|___")    
-    print(" %c | %c | %c " % (board[4],board[5],board[6]))    
-    print("___|___|___")    
-    print(" %c | %c | %c " % (board[7],board[8],board[9]))    
-    print("   |   |   ")    
-   
-#This Function Checks position is empty or not    
-def CheckPosition(x):    
-    if(board[x] == ' '):    
-        return True    
-    else:    
-        return True    
-   
-#This Function Checks player has won or not    
-def CheckWin():    
-    global Game    
-    #Horizontal winning condition    
-    if(board[1] == board[2] and board[2] == board[3] and board[1] != ' '):    
-        Game = Win    
-    elif(board[4] == board[5] and board[5] == board[6] and board[4] != ' '):    
-        Game = Win    
-    elif(board[7] == board[8] and board[8] == board[9] and board[7] != ' '):    
-        Game = Win    
-    #Vertical Winning Condition    
-    elif(board[1] == board[4] and board[4] == board[7] and board[1] != ' '):    
-        Game = Win    
-    elif(board[2] == board[5] and board[5] == board[8] and board[2] != ' '):    
-        Game = Win    
-    elif(board[3] == board[6] and board[6] == board[9] and board[3] != ' '):    
-        Game=Win    
-    #Diagonal Winning Condition    
-    elif(board[1] == board[5] and board[5] == board[9] and board[5] != ' '):    
-        Game = Win    
-    elif(board[3] == board[5] and board[5] == board[7] and board[5] != ' '):    
-        Game=Win    
-    #Match Tie or Draw Condition    
-    elif(board[1]!=' ' and board[2]!=' ' and board[3]!=' ' and board[4]!=' ' and board[5]!=' ' and board[6]!=' ' and board[7]!=' ' and board[8]!=' ' and board[9]!=' '):    
-        Game=Draw    
-    else:            
-        Game=Running    
-    
-print("Tic-Tac-Toe Game Designed By Om Ghumre")    
-print("Player 1 [X] --- Player 2 [O]\n")    
-print()    
-print()    
-print("Please Wait...")    
-time.sleep(3)    
-while(Game == Running):    
-    os.system('cls')    
-    DrawBoard()    
-    if(player % 2 != 0):    
-        print("Player 1's chance")    
-        Mark = 'X'    
-    else:    
-        print("Player 2's chance")    
-        Mark = 'O'    
-    choice = int(input("Enter the position between [1-9] where you want to mark : "))    
-    if(CheckPosition(choice)):    
-        board[choice] = Mark    
-        player+=1    
-        CheckWin()    
-    
-os.system('cls')    
-DrawBoard()    
-if(Game==Draw):    
-    print("Game Draw")    
-elif(Game==Win):    
-    player-=1    
-    if(player%2!=0):    
-        print("Player 1 Won")    
-    else:    
-        print("Player 2 Won") 
+import random
+
+BOARD_SIZE = 9
+EMPTY_BOX = ' '
+HUMAN_MARK = 'X'
+COMPUTER_MARK = 'O'
+WINNING_COMBOS = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],  # rows
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],  # columns
+    [0, 4, 8], [2, 4, 6],             # diagonals
+]
+
+def print_board(initial=False):
+    """
+    Print the current state of the board. If this is the beginning of the game,
+    print out numbers 1-9 to show players how to pick a box. Otherwise, update
+    each box with X or O from the boxes list.
+    """
+    if initial:
+        print('\n'.join(f'{i+1}' for i in range(BOARD_SIZE)))
+    else:
+        print(f'''
+         {boxes[0]} | {boxes[1]} | {boxes[2]} 
+        -----------
+         {boxes[3]} | {boxes[4]} | {boxes[5]}
+        -----------
+         {boxes[6]} | {boxes[7]} | {boxes[8]} 
+    ''')
+
+def take_turn(player, turn):
+    """
+    Prompt the player to select an empty box on the board. If the player is
+    the computer, select a random empty box instead. Repeat until a valid
+    choice is made.
+    """
+    while True:
+        if player == COMPUTER_MARK:
+            box = random.randint(0, BOARD_SIZE - 1)
+        else:
+            box = input(f'Player {player}, choose a box (1-9): ')
+            try:
+                box = int(box) - 1  # subtract 1 to sync with boxes[] index numbers
+            except ValueError:
+                print('Invalid input. Try again.\n')
+                continue
+
+        if not (0 <= box < BOARD_SIZE):
+            print('Box number out of range. Try again.\n')
+            continue
+
+        if boxes[box] == EMPTY_BOX:
+            boxes[box] = player
+            break
+        else:
+            print('Box already taken. Try again.\n')
+
+def switch_player(turn):
+    """
+    Determine the current player based on the turn number. The first player
+    is always HUMAN_MARK.
+    """
+    return HUMAN_MARK if turn % 2 == 1 else COMPUTER_MARK
+
+def check_for_win(player, turn):
+    """
+    Check if the current player has won the game or if it's a tie. If neither,
+    return None to continue the game.
+    """
+    if turn < 2:
+        return None
+
+    for combo in WINNING_COMBOS:
+        if all(boxes[i] == player for i in combo):
+            return 'win'
+
+    if EMPTY_BOX not in boxes:
+        return 'tie'
+
+    return None
+
+def play(player, turn):
+    """
+    Play a game of Tic Tac Toe between two players, where player can be either
+    HUMAN_MARK or COMPUTER_MARK. The game continues until a player wins or it's
+    a tie.
+    """
+    while True:
+        take_turn(player, turn)
+        print_board()
+        result = check_for_win(player, turn)
+        if result == 'win':
+            print(f'Game over. Player {player} wins!')
+            break
+        elif result == 'tie':
